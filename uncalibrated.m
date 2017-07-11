@@ -1,5 +1,6 @@
+% uncalibrated method for photometric stereo, for Lambertian only?
 light_file = 'data/lighting/lights_25.txt';
-image_folder = 'data/image/15_6/';
+image_folder = 'data/image/52_6/';
 mat_file = 'data/mats/rabbit.mat';
 load(mat_file);
 lights = load(light_file);
@@ -32,19 +33,23 @@ S_cap = U*s;
 L_cap = s*V';
 % pick up 6 pixel with the same reflectance ratio
 index = uint32(rand(1,6)*pixel_num+1);
-for i = 1:6
-    to_solve(i,:) = S_cap(index(i),:);
-end
 
-u = to_solve(:,1);
-v = to_solve(:,2);
-w = to_solve(:,3);
+u = S_cap(:,1);
+v = S_cap(:,2);
+w = S_cap(:,3);
 
 unfold = [u.*u, 2*u.*v, 2*u.*w, v.*v, 2*v.*w, w.*w];
-x = unfold\ones(6,1);
+x = unfold\ones(pixel_num,1);
 line1 = [x(1), x(2), x(3)];
 line2 = [x(2), x(4), x(5)];
 line3 = [x(3), x(5), x(6)];
 B = [line1; line2; line3];
+[A,sigma,A_] = eig(B);
+A = A*(sigma.^0.5);
+S = S_cap*A;
+len = sum(S.^2,2);
+len = len.^0.5;
+len = [len,len,len];
+normal = S./len;
 
 
